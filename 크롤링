@@ -1,0 +1,48 @@
+##################################### 영미소설 원작 베스트 ###############################################
+import bs4
+import urllib.request
+import pandas as pd
+
+data = {'랭킹': [], '제목': [], '작가': [], '출판사': [], '출판일': [], '가격': []}
+url_base = "https://www.yes24.com/Product/Category/BestSeller?pageNumber="
+url_suffix = '&pageSize=24&categoryNumber=001001046002002'
+pageNumber = 1
+total = 0
+
+while True:
+    bookUrl = url_base + str(pageNumber) + url_suffix
+    pageNumber += 1
+    htmlObject = urllib.request.urlopen(bookUrl)
+    webPage = htmlObject.read()
+    bsObject = bs4.BeautifulSoup(webPage, 'html.parser')
+    tag = bsObject.find('ul', {'class': 'sGLi tp_book tp_chkG tp_best tp_list'})
+    all_books = tag.findAll('div', {'class': 'item_info'})
+
+    if total < 240:
+
+        for book in all_books:
+            total += 1
+            bookName = book.find("a", {"class": "gd_name"}).text.strip()
+
+            bookAuth = book.find("span", {"class": "info_auth"}).text.strip()
+
+            bookPub = book.find("span", {"class": "info_pub"}).text.strip()
+
+            bookDate = book.find("span", {"class": "info_date"}).text.strip()
+
+            bookPrice = book.find("em", {"class": "yes_b"}).text.strip()
+
+            data['랭킹'].append(total)
+            data['제목'].append(bookName)
+            data['작가'].append(bookAuth)
+            data['출판사'].append(bookPub)
+            data['출판일'].append(bookDate)
+            data['가격'].append(bookPrice)
+
+    if total == 240:
+        break
+
+book_df = pd.DataFrame(data)
+book_df
+book_df.to_excel("영미소설.xlsx", index = False, encoding = 'utf-8')
+print("영미소설 종합 데이터를 엑셀 파일로 저장했습니다.")
